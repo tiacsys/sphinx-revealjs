@@ -6,16 +6,21 @@ from docutils.nodes import (  # type: ignore
     comment,
     literal_block,
     section,
+    document
 )
 from sphinx.writers.html5 import HTML5Translator
 
 from .nodes import revealjs_break
 
 
-def has_child_sections(node: Element, name: str):
+def has_childs_with_tagname(node: Element, names: list[str]):
     """Search has specified section in children."""
     nodes = set([n.tagname for n in node.children])
-    return name in nodes
+    for name in names:
+        if name in nodes:
+            return True
+    
+    return False
 
 
 def find_child_section(node: Element, name: str):
@@ -25,6 +30,8 @@ def find_child_section(node: Element, name: str):
             return n
     return None
 
+def has_nested_section(node):
+    return next(node.findall(section,include_self=False), None) is not None 
 
 class RevealjsSlideTranslator(HTML5Translator):
     """Translate Reveal.js HTML class."""
@@ -36,7 +43,66 @@ class RevealjsSlideTranslator(HTML5Translator):
         self.builder.add_permalinks = False
         self._nest_step = 0
 
+    def visit_compound(self, node):
+        pass
+
+    def depart_compound(self, node):
+        pass
+
+    def visit_start_of_file(self, node):
+        self.body.append(f"<!-- {self.docnames} -->\n\n")
+        super().visit_start_of_file(node)
+        return 
+
     def visit_section(self, node: section):
+        self.section_level += 1
+
+        if(self.section_level==1):
+            if(has_nested_section(node)):
+                self.body.append(f"<!-- BEGIN top-level section with subsections {node.attributes['ids'][0]} -->\n")
+                self.body.append(self.starttag(node, 'section')) 
+
+                self.body.append(f"<!-- BEGIN top-level content before 1st subsection {node.attributes['ids'][0]} -->\n")
+                self.body.append(self.starttag(node, 'section'))        
+
+                self.top_level_content_close_required=True
+                return
+            
+            else:
+                self.body.append(f"<!-- BEGIN top-level section without subsections {node.attributes['ids'][0]} -->\n")
+                self.body.append(self.starttag(node, 'section'))        
+                return
+        
+        #if(has_nested_section(node)):
+        if(self.section_level == 2):
+            if self.top_level_content_close_required:
+                self.body.append("</section>")
+                self.body.append(f"<!-- END top-level content before 1st subsection {node.attributes['ids'][0]} -->\n")
+                self.top_level_content_close_required=False
+            self.body.append(f"<!-- BEGIN 2nd-level section {node.attributes['ids'][0]} -->\n")
+            self.body.append(self.starttag(node, 'section'))        
+
+
+
+    def depart_section(self, node: section):
+        
+        if(self.section_level==1):
+            if(has_nested_section(node)):
+                self.body.append('</section>\n')
+                self.body.append(f"<!-- END top-level section with subsections {node.attributes['ids'][0]} -->\n\n")
+            else:                
+                self.body.append('</section>\n')
+                self.body.append(f"<!-- END top-level section without subsections {node.attributes['ids'][0]} -->\n\n")
+
+        if(self.section_level == 2):
+            self.body.append("</section>\n")        
+            self.body.append(f"<!-- END 2nd-level section {node.attributes['ids'][0]} -->\n")
+
+        self.section_level -= 1
+
+
+
+    def isit_section_(self, node: section):
         """Begin ``section`` node.
 
         - Find first ``revealjs_section`` node and build attributes string.
@@ -65,10 +131,12 @@ class RevealjsSlideTranslator(HTML5Translator):
         if self._nest_step > 0:
             v_meta = find_child_section(node, "revealjs_vertical")
             v_attrs = v_meta.attributes_str() if v_meta is not None else ""
-            self.body.append(f"<section {v_attrs}>\n")
-        self.body.append(f"<section {attrs}>\n")
+            self.body.append(f"<section 'section_level={self.section_level}' 'nest_step={self._nest_step}' {v_attrs}>\n")
+        
+        
+        self.body.append(f"<section 'section_level={self.section_level}' {attrs}>\n")
 
-    def depart_section(self, node: section):
+    def epart_section_(self, node: section):
         """End ``section``.
 
         Dedent section level
@@ -80,7 +148,7 @@ class RevealjsSlideTranslator(HTML5Translator):
         # NOTE:: Reveal.js is max section level is 2.
         if self.section_level > 2:
             return
-        self.body.append("</section>\n")
+        self.body.append(f"</section><!-- section_level={self.section_level} nest_step={self._nest_step} --!>\n")
 
     def visit_comment(self, node: comment):
         """Begin ``comment`` node.
