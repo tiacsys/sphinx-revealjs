@@ -51,7 +51,9 @@ class RevealjsSlideTranslator(HTML5Translator):
     
 
     def depart_compound(self, node):
-        self.body.append(f"\n<!--LEAVE  -->\n")
+        self.section_level = 1
+        self._nest_step = 2
+        self.body.append(f"\n<!--LEAVE  {node.attributes}-->\n")
 
     def visit_start_of_file(self, node):
         self.body.append(f"<!-- {self.docnames} -->\n\n")
@@ -111,7 +113,8 @@ class RevealjsSlideTranslator(HTML5Translator):
             self.body.append("</section>\n")        
             self.body.append(f"<!-- END 2nd-level section {node.attributes['ids'][0]} -->\n")
 
-        self.section_level -= 1
+        if self.section_level > 1: 
+            self.section_level -= 1
 
 
 
