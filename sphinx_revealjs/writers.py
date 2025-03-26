@@ -60,6 +60,23 @@ class RevealjsSlideTranslator(HTML5Translator):
         self.builder.add_permalinks = False
         self._nest_step = 0
 
+    def visit_compound(self, node):
+        self.body.append(f"\n<!--ENTER level= {self.section_level} nesting = {self._nest_step} -->\n")
+        if self.section_level > 1:
+            self.section_level = 1
+            self._nest_step = 2
+    
+
+    def depart_compound(self, node):
+        self.section_level = 1
+        self._nest_step = 2
+        self.body.append(f"\n<!--LEAVE  {node.attributes}-->\n")
+
+    def visit_start_of_file(self, node):
+        self.body.append(f"<!-- {self.docnames} -->\n\n")
+        super().visit_start_of_file(node)
+        return 
+
     def visit_section(self, node: section):
         """Begin ``section`` node.
 
