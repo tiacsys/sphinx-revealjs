@@ -113,8 +113,10 @@ class RevealjsSlideTranslator(HTML5Translator):
                 if v_idx is None
                 else build_attributes_str(node.children[v_idx], self.builder)  # type: ignore[arg-type]
             )
-            self.body.append(f"<section {v_attrs}>\n")
-        self.body.append(f"<section {attrs}>\n")
+            self.body.append(f"<section 'section_level={self.section_level}' 'nest_step={self._nest_step}' {v_attrs}>\n")
+        
+        
+        self.body.append(f"<section 'section_level={self.section_level}' {attrs}>\n")
 
     def depart_section(self, node: section):
         """End ``section``.
