@@ -47,6 +47,8 @@ def build_attributes_str(
             )
     return node.attributes_str()
 
+def has_nested_section(node):
+    return next(node.findall(section,include_self=False), None) is not None 
 
 class RevealjsSlideTranslator(HTML5Translator):
     """Translate Reveal.js HTML class."""
