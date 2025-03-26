@@ -11,6 +11,7 @@ from docutils.nodes import (
     image,
     section,
     title,
+    document
 )
 from sphinx.writers.html5 import HTML5Translator
 
