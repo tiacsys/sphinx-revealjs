@@ -9,6 +9,9 @@ from typing import TYPE_CHECKING
 from sphinx import version_info as sphinx_version
 from sphinx.builders.dirhtml import DirectoryHTMLBuilder
 from sphinx.builders.html import StandaloneHTMLBuilder
+from sphinx.builders.singlehtml import SingleFileHTMLBuilder
+from sphinx.config import Config
+from sphinx.environment import BuildEnvironment
 from sphinx.locale import __
 
 from sphinx_revealjs.directives import raw_json
@@ -30,7 +33,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class RevealjsHTMLBuilder(StandaloneHTMLBuilder):
+class RevealjsHTMLBuilder(SingleFileHTMLBuilder):
     """Sphinx builder class to generate Reveal.js presentation HTML.
 
     This manage theme path and configure default options.
