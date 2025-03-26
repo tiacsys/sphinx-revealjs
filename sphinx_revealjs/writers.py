@@ -12,6 +12,7 @@ from docutils.nodes import (  # type: ignore
     literal_block,
     section,
     title,
+    document
 )
 from sphinx.builders.html import StandaloneHTMLBuilder
 from sphinx.writers.html5 import HTML5Translator
