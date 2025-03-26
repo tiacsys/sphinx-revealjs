@@ -130,7 +130,7 @@ class RevealjsSlideTranslator(HTML5Translator):
         # NOTE:: Reveal.js is max section level is 2.
         if self.section_level > 2:
             return
-        self.body.append("</section>\n")
+        self.body.append(f"\n</section>\n<!-- section_level={self.section_level} nest_step={self._nest_step} -->\n")
 
     def visit_comment(self, node: Element):
         """Begin ``comment`` node.
