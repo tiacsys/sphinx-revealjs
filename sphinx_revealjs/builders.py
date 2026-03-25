@@ -6,7 +6,9 @@ import copy
 import logging
 from typing import TYPE_CHECKING
 
+from docutils import nodes
 from sphinx import version_info as sphinx_version
+from sphinx.addnodes import start_of_file
 from sphinx.builders.dirhtml import DirectoryHTMLBuilder
 from sphinx.builders.html import StandaloneHTMLBuilder
 from sphinx.builders.singlehtml import SingleFileHTMLBuilder
@@ -146,6 +148,40 @@ class RevealjsHTMLBuilder(SingleFileHTMLBuilder):
         if self.revealjs_slide.content:
             configs.append(self.revealjs_slide.content)
         return configs
+
+    def assemble_doctree(self) -> nodes.document:
+        """Assemble doctree and inject toctree title lists.
+
+        After the standard SingleFileHTMLBuilder inlines all toctrees,
+        walk the tree and insert a bullet_list of first-level section
+        titles into each toctree-wrapper compound node.  This lets the
+        presentation show an auto-generated overview slide for each
+        toctree without manual maintenance.
+        """
+        tree = super().assemble_doctree()
+        for compound in tree.findall(nodes.compound):
+            if "toctree-wrapper" not in compound.get("classes", []):
+                continue
+            titles = []
+            for child in compound.children:
+                if not isinstance(child, start_of_file):
+                    continue
+                for subchild in child.children:
+                    if isinstance(subchild, nodes.section):
+                        idx = subchild.first_child_matching_class(nodes.title)
+                        if idx is not None:
+                            titles.append(subchild.children[idx].astext())
+                        break
+            if not titles:
+                continue
+            bullet_list = nodes.bullet_list()
+            bullet_list["classes"].append("simple")
+            for t in titles:
+                list_item = nodes.list_item()
+                list_item += nodes.paragraph(text=t)
+                bullet_list += list_item
+            compound.insert(0, bullet_list)
+        return tree
 
     def prepare_writing(self, docnames: set[str]):
         super().prepare_writing(docnames)
