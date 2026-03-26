@@ -130,6 +130,7 @@ def setup(app: Sphinx):
     app.add_config_value("revealjs_script_files", [], "env")
     app.add_config_value("revealjs_script_conf", None, "env")
     app.add_config_value("revealjs_script_plugins", [], "env")
+    app.add_config_value("revealjs_toctree_as_list", False, "env")
     app.add_html_theme("revealjs-basic", str(get_theme_path("revealjs-basic")))
     app.add_html_theme("revealjs-simple", str(get_theme_path("revealjs-simple")))
     app.setup_extension("sphinx_revealjs._ext.highlightings")
