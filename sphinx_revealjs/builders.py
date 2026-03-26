@@ -159,6 +159,8 @@ class RevealjsHTMLBuilder(SingleFileHTMLBuilder):
         toctree without manual maintenance.
         """
         tree = super().assemble_doctree()
+        if not getattr(self.config, "revealjs_toctree_as_list", False):
+            return tree
         for compound in tree.findall(nodes.compound):
             if "toctree-wrapper" not in compound.get("classes", []):
                 continue
