@@ -57,7 +57,7 @@ def build_attributes_str(
     return node.attributes_str()
 
 def has_nested_section(node):
-    return next(node.findall(section,include_self=False), None) is not None 
+    return next(node.findall(section,include_self=False), None) is not None
 
 class RevealjsSlideTranslator(HTML5Translator):
     """Translate Reveal.js HTML class."""
@@ -74,7 +74,7 @@ class RevealjsSlideTranslator(HTML5Translator):
         if self.section_level > 1:
             self.section_level = 1
             self._nest_step = 2
-    
+
 
     def depart_compound(self, node):
         self.section_level = 1
@@ -84,7 +84,7 @@ class RevealjsSlideTranslator(HTML5Translator):
     def visit_start_of_file(self, node):
         self.body.append(f"<!-- {self.docnames} -->\n\n")
         super().visit_start_of_file(node)
-        return 
+        return
 
     def visit_section(self, node: section):
         """Begin ``section`` node.
@@ -123,9 +123,21 @@ class RevealjsSlideTranslator(HTML5Translator):
                 else build_attributes_str(node.children[v_idx], self.builder)  # type: ignore[arg-type]
             )
             self.body.append(f"<section 'section_level={self.section_level}' 'nest_step={self._nest_step}' {v_attrs}>\n")
-        
-        
+
+
         self.body.append(f"<section 'section_level={self.section_level}' {attrs}>\n")
+
+        if (
+            (self.section_level == 2 or self.section_level == 3)
+            and self.config.revealjs_show_chapter_title
+        ):
+            parent = node.parent
+            if isinstance(parent, section):
+                t_idx = parent.first_child_matching_class(title)
+                if t_idx is not None:
+                    self.body.append('<div class="chapter-title">')
+                    parent.children[t_idx].walkabout(self)
+                    self.body.append('</div>\n')
 
     def depart_section(self, node: section):
         """End ``section``.
@@ -224,6 +236,14 @@ def depart_revealjs_break(self, node: revealjs_break):
     """
     attrs = build_attributes_str(node, self.builder)
     self.body.append(f"<section {attrs}>\n")
+    if self.config.revealjs_show_chapter_title:
+        grandparent = node.parent.parent
+        if isinstance(grandparent, section):
+            t_idx = grandparent.first_child_matching_class(title)
+            if t_idx is not None:
+                self.body.append('<div class="chapter-title">')
+                grandparent.children[t_idx].walkabout(self)
+                self.body.append('</div>\n')
     if "notitle" not in node.attributes:
         idx = node.parent.first_child_matching_class(title)
         if idx is None:
