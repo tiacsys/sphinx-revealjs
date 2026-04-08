@@ -84,6 +84,8 @@ def resolve_arch() -> ARCH_NAME:
         arch_name = "x64"
     if arch_name.startswith("arm") and arch_name != "arm64":
         arch_name = "arm"
+    if arch_name.startswith("aarch64"):
+        arch_name = "arm64"
     libc = platform.libc_ver()
     arch_suffix = "-musi" if "musl" in libc[0] else ""
     return f"{arch_name}{arch_suffix}"  # type: ignore[return-value]
